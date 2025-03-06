@@ -3,36 +3,33 @@
 import { useState } from 'react';
 import ChatList from '@/components/ChatList';
 import ChatDetail from '@/components/ChatDetail';
+import RightSidebar from '@/components/RightSidebar';
 
 export default function DashboardPage() {
-  const [selectedChatId, setSelectedChatId] = useState<string | null>("1"); // Default to first chat
+  const [selectedChatId, setSelectedChatId] = useState<string | undefined>('chat-5'); // Default to chat-5 (Test El Centro)
   
   const handleSelectChat = (chatId: string) => {
     setSelectedChatId(chatId);
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex w-full">
       {/* Chat List (Left Side) */}
-      <div className="w-1/3 h-full">
+      <div className="w-1/4 h-full">
         <ChatList 
           onSelectChat={handleSelectChat} 
           selectedChatId={selectedChatId}
         />
       </div>
       
-      {/* Chat Detail (Right Side) */}
-      <div className="w-2/3 h-full">
-        {selectedChatId ? (
-          <ChatDetail chatId={selectedChatId} />
-        ) : (
-          <div className="h-full flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-gray-700">Select a chat to start messaging</h3>
-              <p className="text-sm text-gray-500 mt-2">Choose a conversation from the list</p>
-            </div>
-          </div>
-        )}
+      {/* Chat Detail (Middle) */}
+      <div className="flex-1 h-full">
+        <ChatDetail chatId={selectedChatId} />
+      </div>
+
+      {/* Right Sidebar */}
+      <div className="h-full">
+        <RightSidebar />
       </div>
     </div>
   );

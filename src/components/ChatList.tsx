@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Search, Filter } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import supabase from '@/utils/supabaseClient';
+import { useState } from 'react';
+import { Search, ListFilter, Folder } from 'lucide-react';
 
 interface ChatItem {
   id: string;
@@ -11,10 +9,10 @@ interface ChatItem {
   lastMessage: string;
   time: string;
   avatar: string;
-  tags: { id: string, name: string; color: string }[];
+  tags: { id: string; name: string; color: string }[];
   unreadCount?: number;
   isPinned?: boolean;
-  mentions?: number;
+  mentions?: string;
 }
 
 interface ChatListProps {
@@ -23,196 +21,116 @@ interface ChatListProps {
 }
 
 const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChatId }) => {
-  const [chats, setChats] = useState<ChatItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchChats = async () => {
-      setLoading(true);
-      
-      // Get all chats the user is part of
-      const { data: chatParticipants, error: participantsError } = await supabase
-        .from('chat_participants')
-        .select('chat_id')
-        .eq('user_id', user.id);
-        
-      if (participantsError) {
-        console.log('Error fetching chat participants:', participantsError);
-        setLoading(false);
-        return;
-      }
-      
-      if (!chatParticipants || chatParticipants.length === 0) {
-        setLoading(false);
-        return;
-      }
-      
-      const chatIds = chatParticipants.map(cp => cp.chat_id);
-      
-      // Get chat details
-      const { data: chatData, error: chatsError } = await supabase
-        .from('chats')
-        .select(`
-          id,
-          name,
-          is_group,
-          updated_at,
-          chat_participants!inner(
-            user_id,
-            users:user_id(id, full_name, avatar_url, phone)
-          ),
-          chat_tags(id, name, color)
-        `)
-        .in('id', chatIds)
-        .order('updated_at', { ascending: false });
-      
-      if (chatsError || !chatData) {
-        console.error('Error fetching chats:', chatsError);
-        setLoading(false);
-        return;
-      }
-
-      // Get last message for each chat
-      const chatMessages = await Promise.all(chatData.map(async (chat) => {
-        const { data: messages, error: messagesError } = await supabase
-          .from('messages')
-          .select(`
-            id,
-            content,
-            created_at,
-            user_id,
-            users:user_id(full_name)
-          `)
-          .eq('chat_id', chat.id)
-          .order('created_at', { ascending: false })
-          .limit(1);
-          
-        if (messagesError) {
-          console.error(`Error fetching messages for chat ${chat.id}:`, messagesError);
-          return { chat, lastMessage: null };
-        }
-        
-        return { chat, lastMessage: messages && messages.length > 0 ? messages[0] : null };
-      }));
-
-      // Get unread message counts
-      const chatUnreadCounts = await Promise.all(chatData.map(async (chat) => {
-        const { data: unreadMessages, error: unreadError } = await supabase
-          .from('messages')
-          .select(`
-            id,
-            message_status!inner(status, user_id)
-          `)
-          .eq('chat_id', chat.id)
-          .not('user_id', 'eq', user.id)
-          .filter('message_status.user_id', 'eq', user.id)
-          .filter('message_status.status', 'neq', 'read');
-          
-        if (unreadError) {
-          console.error(`Error fetching unread count for chat ${chat.id}:`, unreadError);
-          return { chatId: chat.id, count: 0 };
-        }
-        
-        return { chatId: chat.id, count: unreadMessages ? unreadMessages.length : 0 };
-      }));
-      
-      // Format chat data for display
-      const formattedChats = chatMessages.map(({ chat, lastMessage }) => {
-        const unreadData = chatUnreadCounts.find(uc => uc.chatId === chat.id);
-        const unreadCount = unreadData ? unreadData.count : 0;
-        
-        // Get chat name (for non-group chats, use other participants' names)
-        let chatName = chat.name;
-        if (!chatName && chat.chat_participants) {
-          const otherParticipants = chat.chat_participants
-            .filter(p => p.user_id !== user.id)
-            .map(p => p.users);
-          
-          chatName = otherParticipants.map(p => p.full_name).join(', ');
-        }
-        
-        // Get chat avatar
-        let avatar = '';
-        if (!chat.is_group && chat.chat_participants) {
-          const otherParticipant = chat.chat_participants.find(p => p.user_id !== user.id);
-          if (otherParticipant && otherParticipant.users.avatar_url) {
-            avatar = otherParticipant.users.avatar_url;
-          }
-        }
-        
-        return {
-          id: chat.id,
-          name: chatName || 'Unnamed Chat',
-          lastMessage: lastMessage ? 
-            `${lastMessage.users?.full_name || 'Unknown'}: ${lastMessage.content}` : 
-            'No messages yet',
-          time: lastMessage ? 
-            formatMessageTime(lastMessage.created_at) : 
-            formatMessageTime(chat.updated_at),
-          avatar: avatar,
-          tags: chat.chat_tags || [],
-          unreadCount: unreadCount > 0 ? unreadCount : undefined
-        };
-      });
-      
-      setChats(formattedChats);
-      setLoading(false);
-    };
-    
-    fetchChats();
-    
-    // Set up real-time subscription for new messages
-    const messageSubscription = supabase
-      .channel('public:messages')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages'
-      }, () => {
-        fetchChats();
-      })
-      .subscribe();
-      
-    // Subscribe to message status changes
-    const statusSubscription = supabase
-      .channel('public:message_status')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'message_status'
-      }, () => {
-        fetchChats();
-      })
-      .subscribe();
-      
-    return () => {
-      supabase.removeChannel(messageSubscription);
-      supabase.removeChannel(statusSubscription);
-    };
-  }, [user]);
-
-  // Format timestamp for display
-  const formatMessageTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    
-    // If today, show time
-    if (date.toDateString() === now.toDateString()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    // If this year, show date without year
-    if (date.getFullYear() === now.getFullYear()) {
-      return date.toLocaleDateString([], { day: '2-digit', month: 'short' });
-    }
-    
-    // Otherwise show full date
-    return date.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
-  };
+  
+  // Hardcoded chats
+  const chats: ChatItem[] = [
+    {
+      id: 'chat-1',
+      name: 'Test Skope Final 5',
+      lastMessage: 'Support2: This doesn\'t go on Tuesday...',
+      time: 'Yesterday',
+      avatar: '',
+      tags: [{ id: 'tag1', name: 'Demo', color: '#ff9800' }],
+      unreadCount: 4
+    },
+    {
+      id: 'chat-2',
+      name: 'Periskope Team Chat',
+      lastMessage: 'Periskope: Test message',
+      time: '28-Feb-25',
+      avatar: '',
+      tags: [
+        { id: 'tag2', name: 'Demo', color: '#ff9800' },
+        { id: 'tag3', name: 'Internal', color: '#4caf50' }
+      ],
+      mentions: '91 91910101032'
+    },
+    {
+      id: 'chat-3',
+      name: '+91 99999 99999',
+      lastMessage: 'Hi there, I\'m Swapnika, Co-Founder of ...',
+      time: '25-Feb-25',
+      avatar: '',
+      tags: [
+        { id: 'tag4', name: 'Demo', color: '#ff9800' },
+        { id: 'tag5', name: 'Signup', color: '#2196f3' }
+      ]
+    },
+    {
+      id: 'chat-4',
+      name: 'Test Demo 23',
+      lastMessage: 'Rohosen: 123',
+      time: '25-Feb-25',
+      avatar: '',
+      tags: [
+        { id: 'tag6', name: 'Content', color: '#9c27b0' },
+        { id: 'tag7', name: 'Demo', color: '#ff9800' }
+      ],
+      unreadCount: 4
+    },
+    {
+      id: 'chat-5',
+      name: 'Test El Centro',
+      lastMessage: 'Roshnag: Hello, Ahmadport!',
+      time: '04-Feb-25',
+      avatar: '',
+      tags: [{ id: 'tag8', name: 'Demo', color: '#ff9800' }]
+    },
+    {
+      id: 'chat-6',
+      name: 'Testing group',
+      lastMessage: 'Testing 12345',
+      time: '27-Jan-25',
+      avatar: '',
+      tags: [{ id: 'tag9', name: 'Demo', color: '#ff9800' }]
+    },
+    {
+      id: 'chat-7',
+      name: 'Yasin 3',
+      lastMessage: 'First Bulk Message',
+      time: '25-Nov-24',
+      avatar: '',
+      tags: [
+        { id: 'tag10', name: 'Demo', color: '#ff9800' },
+        { id: 'tag11', name: 'Dont Send', color: '#f44336' }
+      ],
+      mentions: '91 99281919101'
+    },
+    {
+      id: 'chat-8',
+      name: 'Testing group',
+      lastMessage: 'Testing 12345',
+      time: '27-Jan-25',
+      avatar: '',
+      tags: [{ id: 'tag12', name: 'Demo', color: '#ff9800' }],
+      unreadCount: 2
+    },
+    {
+      id: 'chat-9',
+      name: 'Testing group',
+      lastMessage: 'Testing 12345',
+      time: '27-Jan-25',
+      avatar: '',
+      tags: [{ id: 'tag13', name: 'Demo', color: '#ff9800' }]
+    },
+    {
+      id: 'chat-10',
+      name: 'Testing group',
+      lastMessage: 'Testing 12345',
+      time: '27-Jan-25',
+      avatar: '',
+      tags: [{ id: 'tag14', name: 'Demo', color: '#ff9800' }]
+    },
+    {
+      id: 'chat-11',
+      name: 'Testing group',
+      lastMessage: 'Testing 12345',
+      time: '27-Jan-25',
+      avatar: '',
+      tags: [{ id: 'tag15', name: 'Demo', color: '#ff9800' }]
+    },
+  ];
 
   // Get avatar fallback (initials) when no avatar image
   const getAvatarFallback = (name: string) => {
@@ -233,37 +151,37 @@ const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChatId }) => 
   return (
     <div className="flex flex-col h-full border-r border-gray-200 bg-white">
       {/* Search and Filter Bar */}
-      <div className="p-2 border-b border-gray-200 flex space-x-2">
-        <button className="flex items-center space-x-1 bg-green-50 text-green-600 px-3 py-1.5 rounded-md text-sm">
-          <Filter size={16} />
-          <span>Custom filter</span>
-        </button>
-        <button className="bg-gray-100 text-gray-600 px-3 py-1.5 rounded-md text-sm">
-          Save
-        </button>
-        <div className="flex-1 relative ml-2">
-          <input
-            type="text"
-            placeholder="Search"
-            className="w-full pl-8 pr-3 py-1.5 border border-gray-200 rounded-md text-sm"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+      <div className="border-b border-gray-200 flex justify-between text-sm tracking-tighter p-2">
+        <div className='flex justify-normal gap-2'>
+          <button className="flex items-center gap-1 font-bold text-green-600 rounded-md text-sm">
+            <Folder size={16} className='' />
+            <div className='text-sm tracking-tight'>Custom filter</div>
+          </button>
+          <button className="bg-gray-100 text-gray-600 rounded-md text-sm p-1">
+            Save
+          </button>
         </div>
-        <button className="bg-gray-100 text-green-600 px-3 py-1.5 rounded-md text-sm flex items-center space-x-1">
-          <Filter size={16} />
-          <span>Filtered</span>
-        </button>
+        <div className='flex justify-normal gap-2'>
+          <div className="flex justify-normal items-center gap-1 border border-gray-200 rounded-md text-sm text-black p-1 w-20">
+            <Search size={12} />
+            <input
+              type="text"
+              placeholder="Search"
+              className="w-2/3 outline-none focus:outline-none"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button className="bg-gray-100 text-green-600 rounded-md text-sm flex items-center gap-1 p-1">
+            <ListFilter size={16} />
+            <span>Filtered</span>
+          </button>
+        </div>
       </div>
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
-        {loading ? (
-          <div className="flex justify-center items-center h-20">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-500"></div>
-          </div>
-        ) : filteredChats.length === 0 ? (
+        {filteredChats.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             {searchTerm ? 'No chats match your search' : 'No chats yet'}
           </div>
@@ -280,26 +198,9 @@ const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChatId }) => 
                 {/* Avatar */}
                 <div className="relative mr-3 mt-1">
                   <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                    {chat.avatar ? (
-                      <div className="relative h-full w-full">
-                        <img 
-                          src={chat.avatar} 
-                          alt={chat.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            // If image fails to load, show fallback
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center text-lg font-medium text-gray-600">
-                          {getAvatarFallback(chat.name)}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="text-lg font-medium text-gray-600">
-                        {getAvatarFallback(chat.name)}
-                      </span>
-                    )}
+                    <span className="text-lg font-medium text-gray-600">
+                      {getAvatarFallback(chat.name)}
+                    </span>
                   </div>
                   {chat.unreadCount && (
                     <div className="absolute bottom-0 right-0 bg-green-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
@@ -321,7 +222,7 @@ const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChatId }) => 
                   
                   <div className="flex items-center mt-1">
                     {chat.mentions && (
-                      <span className="text-xs text-gray-500 mr-1">+{chat.mentions}</span>
+                      <span className="bg-gray-200 p-1 rounded-md text-[8px] text-gray-500 mr-1">+{chat.mentions}</span>
                     )}
                     <div className="flex space-x-1">
                       {chat.tags.map((tag) => (

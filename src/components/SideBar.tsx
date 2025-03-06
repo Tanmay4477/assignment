@@ -1,21 +1,20 @@
-// components/Sidebar.tsx
-"use client";
-
+"use client"
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   Home, 
-  MessageCircle, 
+  MessageCircleMore, 
   Ticket, 
-  BarChart2, 
+  ChartLine, 
   List, 
-  Bell, 
+  Volume2, 
   Network, 
   FileText, 
-  Image, 
-  CheckSquare, 
+  BookUser, 
+  ListChecks, 
   Settings,
-  Star
+  SlidersVertical,
+  FileJson2
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -23,21 +22,21 @@ const Sidebar = () => {
   
   const topNavigation = [
     { name: 'Home', href: '/dashboard/home', icon: Home },
-    { name: 'Messages', href: '/dashboard', icon: MessageCircle },
+    { name: 'Messages', href: '/dashboard', icon: MessageCircleMore },
     { name: 'Tickets', href: '/dashboard/tickets', icon: Ticket },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart2 },
+    { name: 'Analytics', href: '/dashboard/analytics', icon: ChartLine },
     { name: 'List', href: '/dashboard/list', icon: List },
-    { name: 'Notifications', href: '/dashboard/notifications', icon: Bell },
+    { name: 'Notifications', href: '/dashboard/notifications', icon: Volume2 },
     { name: 'Network', href: '/dashboard/network', icon: Network },
     { name: 'Documents', href: '/dashboard/documents', icon: FileText },
-    { name: 'Media', href: '/dashboard/media', icon: Image },
-    { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+    { name: 'Media', href: '/dashboard/media', icon: BookUser },
+    { name: 'Tasks', href: '/dashboard/tasks', icon: ListChecks },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
   
   const bottomNavigation = [
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
-    { name: 'Favorites', href: '/dashboard/favorites', icon: Star },
+    { name: 'Settings', href: '/dashboard/settings', icon: SlidersVertical },
+    { name: 'Favorites', href: '/dashboard/favorites', icon: FileJson2 },
   ];
 
   const isActive = (path: string) => {
@@ -45,7 +44,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="h-screen w-16 flex flex-col bg-white shadow-md p-2">
+    <div className="h-screen w-16 flex flex-col bg-white shadow-md p-2 border-r border-gray-200">
       {/* Logo */}
       <div className="flex justify-center">
         <img 
