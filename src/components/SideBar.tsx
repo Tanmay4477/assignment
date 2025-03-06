@@ -32,7 +32,7 @@ const Sidebar = () => {
     { name: 'Documents', href: '/dashboard/documents', icon: FileText },
     { name: 'Media', href: '/dashboard/media', icon: Image },
     { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
-    { name: 'Tasks', href: '/dashboard/tasks', icon: CheckSquare },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
   
   const bottomNavigation = [

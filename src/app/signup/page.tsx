@@ -19,8 +19,8 @@ export default function SignUp() {
     try {
       await signUp(email, password)
       // Redirect to confirmation page
-      // router.push('/signup/confirm')
-    } catch (error: any) {
+      router.push('/dashboard')
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(error.message)
     }
   }

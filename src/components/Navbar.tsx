@@ -1,7 +1,5 @@
-// components/Navbar.tsx
 "use client";
 
-import { useState } from 'react';
 import { 
   RefreshCw, 
   HelpCircle, 
@@ -11,12 +9,13 @@ import {
   Menu,
   MessageCircle
 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
 
 const Navbar = () => {
-  const { user } = useAuth();
-  const [activeDevices, setActiveDevices] = useState(5);
-  const [totalDevices, setTotalDevices] = useState(6);
+  // const [activeDevices, setActiveDevices] = useState(5);
+  // const [totalDevices, setTotalDevices] = useState(6);
+
+  const activeDevices = 5;
+  const totalDevices = 6;
 
   return (
     <div className="h-10 bg-white border-b border-gray-200 px-2 flex items-center justify-between">

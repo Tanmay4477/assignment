@@ -6,6 +6,9 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
+
 export interface Database {
   public: {
     Tables: {
@@ -213,7 +216,7 @@ export interface Database {
         ]
       }
     }
-    Views: {}
+    Views: {} 
     Functions: {
       create_chat: {
         Args: {
@@ -237,6 +240,8 @@ export interface Database {
         Returns: boolean
       }
     }
-    Enums: {}
+    Enums: {} 
   }
 }
+
+/* eslint-enable @typescript-eslint/no-empty-object-type */

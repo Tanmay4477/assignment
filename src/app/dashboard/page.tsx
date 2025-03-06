@@ -1,13 +1,10 @@
-// app/dashboard/page.tsx
 "use client";
 
 import { useState } from 'react';
 import ChatList from '@/components/ChatList';
 import ChatDetail from '@/components/ChatDetail';
-import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
   const [selectedChatId, setSelectedChatId] = useState<string | null>("1"); // Default to first chat
   
   const handleSelectChat = (chatId: string) => {

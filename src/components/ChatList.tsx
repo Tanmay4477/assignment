@@ -1,4 +1,3 @@
-// components/ChatList.tsx
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -42,7 +41,7 @@ const ChatList: React.FC<ChatListProps> = ({ onSelectChat, selectedChatId }) => 
         .eq('user_id', user.id);
         
       if (participantsError) {
-        console.error('Error fetching chat participants:', participantsError);
+        console.log('Error fetching chat participants:', participantsError);
         setLoading(false);
         return;
       }

@@ -1,8 +1,7 @@
-// components/ChatDetail.tsx
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, MoreVertical, ArrowDown, Check } from 'lucide-react';
+import { Search, MoreVertical, Check } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import supabase from '@/utils/supabaseClient';
 import MessageInput from './MessageInput';
@@ -25,7 +24,7 @@ interface ChatDetailProps {
 
 const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [chatInfo, setChatInfo] = useState<any>(null);
+  const [chatInfo, setChatInfo] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,14 +59,14 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
         .single();
         
       if (chatError || !chatData) {
-        console.error('Error fetching chat details:', chatError);
+        console.log('Error fetching chat details:', chatError);
         setLoading(false);
         return;
       }
       
       // Format chat info
       const chatName = chatData.name || formatChatName(chatData.chat_participants, user.id);
-      const participants = chatData.chat_participants.map((p: any) => p.users);
+      const participants = chatData.chat_participants.map((p: any) => p.users); // eslint-disable-line @typescript-eslint/no-explicit-any
       
       setChatInfo({
         id: chatData.id,
@@ -97,14 +96,14 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
       }
       
       // Format messages
-      const formattedMessages = messagesData.map((msg: any) => {
+      const formattedMessages = messagesData.map((msg: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
         // Check message status
-        const userStatuses = msg.message_status.filter((status: any) => 
+        const userStatuses = msg.message_status.filter((status: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
           status.user_id !== user.id
         );
         
-        const isRead = userStatuses.some((status: any) => status.status === 'read');
-        const isDelivered = userStatuses.some((status: any) => 
+        const isRead = userStatuses.some((status: any) => status.status === 'read'); // eslint-disable-line @typescript-eslint/no-explicit-any
+        const isDelivered = userStatuses.some((status: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
           status.status === 'delivered' || status.status === 'read'
         );
         const isSent = true; // Assume sent if it's in the database
@@ -179,12 +178,12 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
     }
     
     // Check message status
-    const userStatuses = msgData.message_status.filter((status: any) => 
+    const userStatuses = msgData.message_status.filter((status: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
       status.user_id !== user?.id
     );
     
-    const isRead = userStatuses.some((status: any) => status.status === 'read');
-    const isDelivered = userStatuses.some((status: any) => 
+    const isRead = userStatuses.some((status: any) => status.status === 'read'); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const isDelivered = userStatuses.some((status: any) => // eslint-disable-line @typescript-eslint/no-explicit-any
       status.status === 'delivered' || status.status === 'read'
     );
     
@@ -209,7 +208,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
   };
   
   // Mark all unread messages as read
-  const markMessagesAsRead = async (messagesData: any[]) => {
+  const markMessagesAsRead = async (messagesData: any[]) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     if (!user) return;
     
     // Get messages that aren't read by current user
@@ -217,7 +216,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
       .filter(msg => msg.user_id !== user.id)
       .filter(msg => {
         const userStatus = msg.message_status.find(
-          (status: any) => status.user_id === user.id
+          (status: any) => status.user_id === user.id // eslint-disable-line @typescript-eslint/no-explicit-any
         );
         return userStatus && userStatus.status !== 'read';
       })
@@ -249,7 +248,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
     if (!chatId || !text.trim() || !user) return;
     
     try {
-      const { data, error } = await supabase.rpc(
+      const { error } = await supabase.rpc(
         'send_message', 
         { chat_id: chatId, content: text }
       );
@@ -263,7 +262,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
   };
 
   // Format chat name for display
-  const formatChatName = (participants: any[], currentUserId: string) => {
+  const formatChatName = (participants: any[], currentUserId: string) => { // eslint-disable-line @typescript-eslint/no-explicit-any
     const otherParticipants = participants.filter(
       p => p.user_id !== currentUserId
     );
@@ -333,7 +332,7 @@ const ChatDetail: React.FC<ChatDetailProps> = ({ chatId }) => {
                 <h2 className="text-sm font-medium">{chatInfo?.name}</h2>
                 <p className="text-xs text-gray-500">
                   {chatInfo?.participants
-                    .map((p: any) => p.full_name)
+                    .map((p: any) => p.full_name) // eslint-disable-line @typescript-eslint/no-explicit-any
                     .join(', ')}
                 </p>
               </div>

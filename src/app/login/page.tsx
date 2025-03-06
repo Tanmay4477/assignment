@@ -19,8 +19,8 @@ export default function Login() {
     try {
       await signIn(email, password)
       router.push('/dashboard')
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+      setError(error?.message)
     }
   }
 
@@ -79,7 +79,7 @@ export default function Login() {
         </form>
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account? <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">Sign up</Link>
+            Don&apos;t have an account? <Link href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">Sign up</Link>
           </p>
         </div>
       </div>
