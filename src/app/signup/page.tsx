@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function SignUp() {
@@ -10,7 +9,6 @@ export default function SignUp() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const { signUp } = useAuth()
-  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +17,6 @@ export default function SignUp() {
     try {
       await signUp(email, password)
       // Redirect to confirmation page
-      router.push('/dashboard')
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       setError(error.message)
     }
