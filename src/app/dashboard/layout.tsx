@@ -1,7 +1,7 @@
 // app/dashboard/layout.tsx
 import Sidebar from '../../components/SideBar/SideBar';
 import Navbar from '../../components/Navbar/Navbar';
-import ProtectedRoute from '../../components/Protected/protectedRoute';
+// import ProtectedRoute from '../../components/Protected/protectedRoute';
 
 export default function DashboardLayout({
   children,
