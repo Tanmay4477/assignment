@@ -1,7 +1,7 @@
 // app/dashboard/layout.tsx
-import Sidebar from '../../components/SideBar';
-import Navbar from '../../components/Navbar';
-import ProtectedRoute from '../../components/protectedRoute';
+import Sidebar from '../../components/SideBar/SideBar';
+import Navbar from '../../components/Navbar/Navbar';
+import ProtectedRoute from '../../components/Protected/protectedRoute';
 
 export default function DashboardLayout({
   children,
@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    // <ProtectedRoute>
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar */}
         <Sidebar />
@@ -25,6 +25,6 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
-    </ProtectedRoute>
+    // </ProtectedRoute>
   );
 }

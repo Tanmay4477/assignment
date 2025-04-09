@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from 'react';
-import ChatList from '@/components/ChatList';
-import ChatDetail from '@/components/ChatDetail';
-import RightSidebar from '@/components/RightSidebar';
+import ChatList from '@/components/ChatList/ChatList';
+import ChatDetail from '@/components/ChatDetail/ChatDetail';
+import RightSidebar from '@/components/SideBar/RightSidebar';
 
 export default function DashboardPage() {
   const [selectedChatId, setSelectedChatId] = useState<string | undefined>('chat-5'); // Default to chat-5 (Test El Centro)
